@@ -59,7 +59,7 @@ function initSignaling(rtc) {
       body: JSON.stringify(message),
     };
 
-    fetch("http://192.168.88.93:8081/offer", options)
+    fetch(`http://${document.getElementById("robot-ip").value}:8081/offer`, options)
       .then((response) => {
         console.log(`statusCode: ${response.status}`);
         return response.json();

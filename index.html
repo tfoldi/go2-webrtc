@@ -1,73 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Unitree Go2 WebRTC Playground</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
-  <style>
-    /* Dark mode styling */
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #1f1f1f;
-      color: #fff;
-    }
-    input[type="text"], button {
-      background-color: #333;
-      color: #fff;
-    }
-    /* Additional styling specific to this page */
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    .log {
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin-top: 20px;
-      max-height: 200px;
-      overflow-y: auto;
-      background-color: #333;
-      color: #fff;
-      display: block;
-      width: 95vw; 
-      white-space: pre-wrap; /* Preserve line breaks within the code */
-    }
-    .log-code {
-      overflow-y: auto;
-      background-color: #333;
-      color: #fff;
-      display: block;
-      white-space: pre-wrap; /* Preserve line breaks within the code */
-    }    
-    .button-primary {
-      background-color: #007bff;
-      color: #fff;
-      border: none;
-      padding: 10px 20px;
-      cursor: pointer;
-    }
-    .button-primary:hover {
-      background-color: #0056b3;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="input-group">
-      <label for="token">Token:</label>
-      <input type="text" id="token" name="token">
-    </div>
-    <div class="input-group">
-      <label for="robot-ip">Robot IP:</label>
-      <input type="text" id="robot-ip" name="robot-ip">
-    </div>
-    <button id="connect-btn" class="button-primary">Connect</button>
-    <div id="log" class="log"><code class="log-code" id="log-code"></code></div>
-    <video id="video-frame" width="640" height="480" autoplay></video>
-  </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unitree Go2 WebRTC Playground</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css"
+    />
+    <style>
+      /* Dark mode styling */
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #1f1f1f;
+        color: #fff;
+      }
+      input[type="text"],
+      button {
+        background-color: #333;
+        color: #fff;
+      }
+      /* Additional styling specific to this page */
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .log {
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-top: 20px;
+        max-height: 200px;
+        overflow-y: auto;
+        background-color: #333;
+        color: #fff;
+        display: block;
+        width: 95vw;
+        white-space: pre-wrap; /* Preserve line breaks within the code */
+      }
+      .log-code {
+        overflow-y: auto;
+        background-color: #333;
+        color: #fff;
+        display: block;
+        white-space: pre-wrap; /* Preserve line breaks within the code */
+      }
+      .button-primary {
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+      }
+      .button-primary:hover {
+        background-color: #0056b3;
+      }
+    </style>
+    <script src="md5.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="input-group">
+        <label for="token">Token:</label>
+        <input type="text" id="token" name="token" />
+      </div>
+      <div class="input-group">
+        <label for="robot-ip">Robot IP:</label>
+        <input type="text" id="robot-ip" name="robot-ip" />
+      </div>
+      <div >
+        <label for="command">Command:</label>
+        <input type="text" id="command" name="token" />
+      </div>
 
-  <script src="index.js"></script>
-</body>
+      <button id="connect-btn" class="button-primary">Connect</button>
+      <button id="execute-btn" class="button-primary">Execute</button>
+    </div>
+    <div>
+      <div id="log" class="log">
+        <code class="log-code" id="log-code"></code>
+      </div>
+    </div>
+    <video id="video-frame" width="640" height="480" autoplay></video>
+
+    <script type="module" src="index.js"></script>
+  </body>
 </html>

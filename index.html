@@ -19,12 +19,24 @@
       button {
         background-color: #333;
         color: #fff;
+        margin-right: 10px;
       }
       /* Additional styling specific to this page */
       .container {
+        display: flex;
         max-width: 800px;
         margin: 0 auto;
         padding: 20px;
+      }
+      .input-group {
+        margin-bottom: 10px;
+      }
+      .input-group label {
+        margin-right: 10px;
+      }
+      .button-group {
+        display: flex;
+        justify-content: space-between;
       }
       .log {
         border: 1px solid #ccc;
@@ -35,7 +47,7 @@
         background-color: #333;
         color: #fff;
         display: block;
-        width: 95vw;
+        width: 100%;
         white-space: pre-wrap; /* Preserve line breaks within the code */
       }
       .log-code {
@@ -55,34 +67,41 @@
       .button-primary:hover {
         background-color: #0056b3;
       }
+      #video-frame {
+        max-width: 100%;
+        height: auto;
+        margin-left: 20px; /* Add some space between the input controls and video frame */
+      }
     </style>
     <script src="md5.js"></script>
   </head>
   <body>
     <div class="container">
-      <div class="input-group">
-        <label for="token">Token:</label>
-        <input type="text" id="token" name="token" />
+      <div>
+        <div class="input-group">
+          <label for="token">Token:</label>
+          <input type="text" id="token" name="token" />
+        </div>
+        <div class="input-group">
+          <label for="robot-ip">Robot IP:</label>
+          <input type="text" id="robot-ip" name="robot-ip" />
+        </div>
+        <div class="input-group">
+          <label for="command">Command:</label>
+          <input type="text" id="command" name="token" />
+        </div>
+        <div class="button-group">
+          <button id="connect-btn" class="button-primary">Connect</button>
+          <button id="execute-btn" class="button-primary">Execute</button>
+        </div>
       </div>
-      <div class="input-group">
-        <label for="robot-ip">Robot IP:</label>
-        <input type="text" id="robot-ip" name="robot-ip" />
-      </div>
-      <div >
-        <label for="command">Command:</label>
-        <input type="text" id="command" name="token" />
-      </div>
-
-      <button id="connect-btn" class="button-primary">Connect</button>
-      <button id="execute-btn" class="button-primary">Execute</button>
+      <video id="video-frame" width="640" height="480" autoplay></video>
     </div>
     <div>
       <div id="log" class="log">
         <code class="log-code" id="log-code"></code>
       </div>
     </div>
-    <video id="video-frame" width="640" height="480" autoplay></video>
-
     <script type="module" src="index.js"></script>
   </body>
 </html>

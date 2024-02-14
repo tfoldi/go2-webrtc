@@ -256,7 +256,7 @@ function saveResolve(rtc, channelType, channel, res, id) {
 }
 
 function publish(rtc, topic, data, channelType) {
-  logMessage(`<- msg type:${data.type} topic:${topic} data:${data}`);
+  logMessage(`<- msg type:${channelType} topic:${topic} data:${JSON.stringify(data)}`);
   return new Promise((resolve, reject) => {
     var ch, f, _;
     console.log("publish: ", topic, data, rtc.channel, channelType);
@@ -312,8 +312,8 @@ function publishReqNew(rtc, topic, msg) {
       (_msg.parameter =
         typeof msg.data == "string" ? msg.data : JSON.stringify(msg.data)),
     msg != null && msg.priority && (_msg.header.policy = { priority: 1 }),
-    // publish(rtc, topic, _msg, DataChannelType.REQUEST)
-    publish(rtc, topic,  {api_id: 1016, data: 1016}, DataChannelType.REQUEST)
+    publish(rtc, topic, _msg, DataChannelType.REQUEST)
+    // publish(rtc, topic,  {api_id: 1016, data: 1016}, DataChannelType.REQUEST)
   );
 }
 
@@ -348,6 +348,7 @@ function handleConnectClick() {
 
   console.log("Token:", token);
   console.log("Robot IP:", robotIP);
+  logMessage(`Connecting to robot on ip ${robotIP}...`);
 
   // Save the values to localStorage
   saveValuesToLocalStorage();

@@ -1,0 +1,5 @@
+python/.env
+*.egg-info
+__pycache__
+python/go2-webrtc-env
+

@@ -60,7 +60,7 @@ function handleExecuteClick() {
   globalThis.rtc.publish("rt/api/sport/request", {
     header: { identity: { id: uniqID, api_id: command } },
     parameter: JSON.stringify(command),
-    api_id: command,
+    // api_id: command,
   });
 }
 

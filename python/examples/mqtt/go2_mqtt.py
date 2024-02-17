@@ -36,12 +36,13 @@ logger.setLevel(logging.DEBUG)
 
 mqtt_client = None
 
+
 def on_connect(client, userdata, flags, reason_code, properties):
-    print("connect: " + str(reason_code))
+    pass
 
 
 def on_publish(client, userdata, mid, reason_codes, properties):
-    print("publish: " + str(mid))
+    pass
 
 
 def get_mqtt_client():
@@ -52,7 +53,9 @@ def get_mqtt_client():
     mqtt_password = os.getenv("MQTT_PASSWORD")
     mqtt_port = os.getenv("MQTT_PORT") or 1883
 
-    mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="Go2", protocol=mqtt.MQTTv311)
+    mqtt_client = mqtt.Client(
+        mqtt.CallbackAPIVersion.VERSION2, client_id="Go2", protocol=mqtt.MQTTv311
+    )
     mqtt_client.on_connect = on_connect
     mqtt_client.on_publish = on_publish
 
@@ -62,7 +65,6 @@ def get_mqtt_client():
 
     # start the MQTT processing loop
     mqtt_client.loop_start()
-
 
 
 # Connect to the robot and disconnect after 3 seconds
@@ -76,6 +78,7 @@ async def bridge_mqtt(conn):
     while True:
         await asyncio.sleep(1)
 
+
 def on_data_channel_open():
     pass
 
@@ -83,21 +86,30 @@ def on_data_channel_open():
 def on_data_channel_message(message):
     global mqtt_client
     print("GO2->MQTT Received message: " + message)
-    
+
     msgobj = json.loads(message)
     if msgobj.get("type") == "validation" and msgobj.get("data") == "Validation Ok.":
         conn.data_channel.send('{"type": "subscribe", "topic": "rt/lf/lowstate" }')
         conn.data_channel.send('{"type": "subscribe", "topic": "rt/multiplestate" }')
+        conn.data_channel.send('{"type": "subscribe", "topic": "rt/utlidar/switch" }')
+        conn.data_channel.send(
+            '{"type": "subscribe", "topic": "rt/utlidar/voxel_map" }'
+        )
+        conn.data_channel.send(
+            '{"type": "subscribe", "topic": "rt/utlidar/lidar_state" }'
+        )
+        conn.data_channel.send('{"type": "subscribe", "topic": "rt/robot_pose" }')
 
-    if mqtt_client: 
-        mqtt_client.publish("go2", message, qos=1)
+    if mqtt_client:
+        topic = msgobj.get("topic") or "go2/system"
+        mqtt_client.publish(topic, message, qos=1)
     else:
         logger.warn("MQTT client not initialized")
+
 
 # Example usage
 if __name__ == "__main__":
     conn = Go2Connection(os.getenv("GO2_IP"), os.getenv("GO2_TOKEN"))
-
 
     conn.data_channel.on("open", on_data_channel_open)
     conn.data_channel.on("message", on_data_channel_message)

@@ -43,7 +43,7 @@ import base64
 
 load_dotenv()
 
-logging.basicConfig(level=logging.WARN)
+# logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -176,8 +176,6 @@ class Go2Connection:
                     # await self.connect()
                 else:
                     logger.info("Failed to get answer from server")
-        while True:
-            await asyncio.sleep(1)
 
     @staticmethod
     def hex_to_base64(hex_str):
@@ -208,11 +206,18 @@ class Go2Connection:
 # Example usage
 if __name__ == "__main__":
     conn = Go2Connection(os.getenv("GO2_IP"), os.getenv("GO2_TOKEN"))
-    robot = conn.connectRobot()
+
+    # Connect to the robot and disconnect after 3 seconds
+    async def connect_then_disconnect(conn):
+        await conn.connectRobot()
+        for _ in range(3):
+            await asyncio.sleep(1)
+
+    task = connect_then_disconnect(conn)
 
     loop = asyncio.get_event_loop()
     try:
-        loop.run_until_complete(robot)
+        loop.run_until_complete(task)
     except KeyboardInterrupt:
         pass
     finally:

@@ -30,6 +30,7 @@ from aiortc import (
 )
 from aiortc.contrib.media import MediaBlackhole, MediaRecorder
 import aiohttp
+
 # from go2_webrtc.go2_cv_video import Go2CvVideo
 from go2_webrtc.constants import SPORT_CMD, DATA_CHANNEL_TYPE
 import logging
@@ -42,7 +43,7 @@ import base64
 
 load_dotenv()
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -69,7 +70,7 @@ class Go2Connection:
         self.video_track = MediaBlackhole()
 
         # Create and add a data channel
-        self.data_channel = self.pc.createDataChannel("data")
+        self.data_channel = self.pc.createDataChannel("data", id=2, negotiated=False)
         self.data_channel.on("open", self.on_data_channel_open)
         self.data_channel.on("message", self.on_data_channel_message)
 
@@ -79,9 +80,6 @@ class Go2Connection:
 
         self.pc.on("track", self.on_track)
         self.pc.on("connectionstatechange", self.on_connection_state_change)
-
-
-
 
     def on_connection_state_change(self):
         logger.info("Connection state is %s", self.pc.connectionState)
@@ -103,21 +101,11 @@ class Go2Connection:
         offer = await self.pc.createOffer()
         logger.debug(offer.sdp)
 
-        async def send_pings():
-            while True:
-                logger.info("in Sending ping")
-                await asyncio.sleep(5)
-
-        @self.data_channel.on("open")
-        def on_open():
-            asyncio.ensure_future(send_pings())
-
-
         await self.pc.setLocalDescription(offer)
         return offer.sdp
 
-    # async def connect(self):
-    #     logger.info("Connected to the robot")
+    async def connect(self):
+        logger.info("Connected to the robot")
 
     async def set_answer(self, sdp):
         """Set the remote description with the provided answer."""
@@ -125,10 +113,16 @@ class Go2Connection:
         await self.pc.setRemoteDescription(answer)
 
     def on_data_channel_open(self):
-        logger.info("Data channel is open")
+        logger.debug("Data channel is open")
 
     def on_data_channel_message(self, message):
         logger.info("Received message: %s", message)
+
+        # If the data channel is not open, open it
+        # it should not be closed if got a message
+        if self.data_channel.readyState != "open":
+            self.data_channel._setReadyState("open")
+
         message = json.loads(message)
         if message.get("type") == "validation":
             self.validate(message)
@@ -137,7 +131,6 @@ class Go2Connection:
         if message.get("data") == "Validation Ok.":
             self.validation_result = "SUCCESS"
         else:
-            logger.info("Sending validation message %s", message.get("data"))
             self.publish(
                 "",
                 self.encrypt_key(message.get("data")),
@@ -155,9 +148,8 @@ class Go2Connection:
             "topic": topic,
             "data": data,
         }
-        logger.info("Sending payload %s", json.dumps(payload))
+        logger.debug("-> Sending message %s", json.dumps(payload))
         self.data_channel.send(json.dumps(payload))
-        logger.info("Payload sent")
 
     async def connectRobot(self):
         """Post the offer to an HTTP server and set the received answer."""

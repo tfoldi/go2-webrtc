@@ -1,48 +1,42 @@
-export const SPORT_CMD = {};
-
-function defineCommand(commands, code, name) {
-  commands[code] = name;
-}
-
-(function initializeCommands(commands) {
-  defineCommand(commands, 1001, "Damp");
-  defineCommand(commands, 1002, "BalanceStand");
-  defineCommand(commands, 1003, "StopMove");
-  defineCommand(commands, 1004, "StandUp");
-  defineCommand(commands, 1005, "StandDown");
-  defineCommand(commands, 1006, "RecoveryStand");
-  defineCommand(commands, 1007, "Euler");
-  defineCommand(commands, 1008, "Move");
-  defineCommand(commands, 1009, "Sit");
-  defineCommand(commands, 1010, "RiseSit");
-  defineCommand(commands, 1011, "SwitchGait");
-  defineCommand(commands, 1012, "Trigger");
-  defineCommand(commands, 1013, "BodyHeight");
-  defineCommand(commands, 1014, "FootRaiseHeight");
-  defineCommand(commands, 1015, "SpeedLevel");
-  defineCommand(commands, 1016, "Hello");
-  defineCommand(commands, 1017, "Stretch");
-  defineCommand(commands, 1018, "TrajectoryFollow");
-  defineCommand(commands, 1019, "ContinuousGait");
-  defineCommand(commands, 1020, "Content");
-  defineCommand(commands, 1021, "Wallow");
-  defineCommand(commands, 1022, "Dance1");
-  defineCommand(commands, 1023, "Dance2");
-  defineCommand(commands, 1024, "GetBodyHeight");
-  defineCommand(commands, 1025, "GetFootRaiseHeight");
-  defineCommand(commands, 1026, "GetSpeedLevel");
-  defineCommand(commands, 1027, "SwitchJoystick");
-  defineCommand(commands, 1028, "Pose");
-  defineCommand(commands, 1029, "Scrape");
-  defineCommand(commands, 1030, "FrontFlip");
-  defineCommand(commands, 1031, "FrontJump");
-  defineCommand(commands, 1032, "FrontPounce");
-  defineCommand(commands, 1033, "WiggleHips");
-  defineCommand(commands, 1034, "GetState");
-  defineCommand(commands, 1035, "EconomicGait");
-  defineCommand(commands, 1036, "FingerHeart");
-})(SPORT_CMD);
-
+export const SPORT_CMD = {
+    1001: "Damp",
+    1002: "BalanceStand",
+    1003: "StopMove",
+    1004: "StandUp",
+    1005: "StandDown",
+    1006: "RecoveryStand",
+    1007: "Euler",
+    1008: "Move",
+    1009: "Sit",
+    1010: "RiseSit",
+    1011: "SwitchGait",
+    1012: "Trigger",
+    1013: "BodyHeight",
+    1014: "FootRaiseHeight",
+    1015: "SpeedLevel",
+    1016: "Hello",
+    1017: "Stretch",
+    1018: "TrajectoryFollow",
+    1019: "ContinuousGait",
+    1020: "Content",
+    1021: "Wallow",
+    1022: "Dance1",
+    1023: "Dance2",
+    1024: "GetBodyHeight",
+    1025: "GetFootRaiseHeight",
+    1026: "GetSpeedLevel",
+    1027: "SwitchJoystick",
+    1028: "Pose",
+    1029: "Scrape",
+    1030: "FrontFlip",
+    1031: "FrontJump",
+    1032: "FrontPounce",
+    1033: "WiggleHips",
+    1034: "GetState",
+    1035: "EconomicGait",
+    1036: "FingerHeart",
+  };
+  
 export const DataChannelType = {};
 
 (function initializeDataChannelTypes(types) {

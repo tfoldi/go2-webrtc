@@ -72,8 +72,30 @@
         height: auto;
         margin-left: 20px; /* Add some space between the input controls and video frame */
       }
+      .corner-div {
+        position: fixed;
+        width: 200px;
+        height: 200px;
+        color: #fff; /* Text color */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 20px;
+        font-size: 20px; /* Example font size */
+      }
+
+      .bottom-left {
+        bottom: 0;
+        left: 0;
+      }
+
+      .bottom-right {
+        bottom: 0;
+        right: 0;
+      }
     </style>
     <script src="md5.js"></script>
+    <script src="joy.min.js"></script>
   </head>
   <body>
     <div class="container">
@@ -88,7 +110,7 @@
         </div>
         <div class="input-group">
           <label for="command">Command:</label>
-          <input type="text" id="command" name="token" />
+          <select id="command"></select>
         </div>
         <div class="button-group">
           <button id="connect-btn" class="button-primary">Connect</button>
@@ -97,11 +119,27 @@
       </div>
       <video id="video-frame" width="640" height="480" autoplay></video>
     </div>
+    <div
+      class="input-group"
+      style="display: flex; align-items: center; margin-top: 20px"
+    >
+      <input
+        type="text"
+        id="custom-command"
+        placeholder="Enter custom message"
+        style="flex-grow: 1; margin-right: 10px"
+      />
+      <button id="execute-custom-btn" class="button-primary">Execute</button>
+    </div>
     <div>
       <div id="log" class="log">
         <code class="log-code" id="log-code"></code>
       </div>
     </div>
+
+    <div id="joy-left" class="corner-div bottom-left"></div>
+    <div id="joy-right" class="corner-div bottom-right"></div>
+
     <script type="module" src="index.js"></script>
   </body>
 </html>

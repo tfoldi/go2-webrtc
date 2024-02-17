@@ -20,6 +20,14 @@ function loadSavedValues() {
   if (savedRobotIP) {
     document.getElementById("robot-ip").value = savedRobotIP;
   }
+
+  const commandSelect = document.getElementById("command");
+  Object.entries(SPORT_CMD).forEach(([value, text]) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = text;
+    commandSelect.appendChild(option);
+  });
 }
 
 // Function to save values to localStorage
@@ -64,6 +72,15 @@ function handleExecuteClick() {
   });
 }
 
+
+function handleExecuteCustomClick() {
+    const command = document.getElementById("custom-command").value;
+  
+    console.log("Command:", command);
+  
+    globalThis.rtc.channel.send(command);
+  }
+
 function truncateString(str, maxLength) {
   if (typeof str !== "string") {
     str = JSON.stringify(str);
@@ -76,8 +93,21 @@ function truncateString(str, maxLength) {
   }
 }
 
+function addJoysticks() {
+  const joyConfig = {
+    internalFillColor: "#FFFFFF",
+    internalLineWidth: 2,
+    internalStrokeColor: "rgba(240, 240, 240, 0.3)",
+    externalLineWidth: 1,
+    externalStrokeColor: "#FFFFFF",
+  };
+  var joyLeft = new JoyStick("joy-left", joyConfig);
+  var joyRight = new JoyStick("joy-right", joyConfig);
+}
+
 // Load saved values when the page loads
 document.addEventListener("DOMContentLoaded", loadSavedValues);
+document.addEventListener("DOMContentLoaded", addJoysticks);
 
 // Attach event listener to connect button
 document
@@ -87,3 +117,7 @@ document
 document
   .getElementById("execute-btn")
   .addEventListener("click", handleExecuteClick);
+
+document
+  .getElementById("execute-custom-btn")
+  .addEventListener("click", handleExecuteCustomClick);

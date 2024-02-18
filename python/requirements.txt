@@ -1,3 +1,5 @@
 aiortc
 aiohttp
-dotenv
+paho-mqtt
+python-dotenv
+pygame

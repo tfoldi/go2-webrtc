@@ -46,7 +46,7 @@ import base64
 
 load_dotenv()
 
-# logging.basicConfig(level=logging.WARN)
+logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -255,7 +255,7 @@ if __name__ == "__main__":
 
     # Connect to the robot and disconnect after 3 seconds
     async def connect_then_disconnect(conn):
-        await conn.connectRobot()
+        await conn.connect_robot()
         for _ in range(3):
             await asyncio.sleep(1)
 

@@ -22,4 +22,4 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from .go2_connection import Go2Connection
-from .constants import SPORT_CMD, DATA_CHANNEL_TYPE, RTC_TOPIC
+from .constants import SPORT_CMD, DATA_CHANNEL_TYPE, RTC_TOPIC, ROBOT_CMD

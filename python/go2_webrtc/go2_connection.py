@@ -40,6 +40,7 @@ from dotenv import load_dotenv
 import os
 import json
 import hashlib
+import struct
 import base64
 
 
@@ -59,18 +60,22 @@ class Go2VideoTrack(VideoStreamTrack):
 
 
 class Go2Connection:
-    def __init__(self, ip=None, token=None, on_validated=None):
+    def __init__(
+        self, ip=None, token=None, on_validated=None, on_message=None, on_open=None
+    ):
         self.pc = RTCPeerConnection()
         self.ip = ip
         self.token = token
         self.validation_result = "PENDING"
+        self.on_validated = on_validated
+        self.on_message = on_message
+        self.on_open = on_open
 
         # self.audio_track = Go2AudioTrack()
         # self.video_track = Go2VideoTrack()
         # self.video_track = Go2CvVideo()
         self.audio_track = MediaBlackhole()
         self.video_track = MediaBlackhole()
-        self.on_validated = on_validated
 
         # Create and add a data channel
         self.data_channel = self.pc.createDataChannel("data", id=2, negotiated=False)
@@ -117,6 +122,8 @@ class Go2Connection:
 
     def on_data_channel_open(self):
         logger.debug("Data channel is open")
+        if self.on_open:
+            self.on_open()
 
     def on_data_channel_message(self, message):
         logger.debug("Received message: %s", message)
@@ -128,9 +135,15 @@ class Go2Connection:
 
         try:
             if isinstance(message, str):
-                message = json.loads(message)
-                if message.get("type") == "validation":
-                    self.validate(message)
+                msgobj = json.loads(message)
+                if msgobj.get("type") == "validation":
+                    self.validate(msgobj)
+            elif isinstance(message, bytes):
+                msgobj = Go2Connection.deal_array_buffer(message)
+
+            if self.on_message:
+                self.on_message(message, msgobj)
+
         except json.JSONDecodeError:
             pass
 
@@ -160,7 +173,7 @@ class Go2Connection:
         logger.debug("-> Sending message %s", json.dumps(payload))
         self.data_channel.send(json.dumps(payload))
 
-    async def connectRobot(self):
+    async def connect_robot(self):
         """Post the offer to an HTTP server and set the received answer."""
         offer_sdp = await self.generate_offer()
         async with aiohttp.ClientSession() as session:
@@ -216,6 +229,24 @@ class Go2Connection:
         return int(
             datetime.datetime.now().timestamp() * 1000 % 2147483648
         ) + random.randint(0, 999)
+
+    @staticmethod
+    def deal_array_buffer(n):
+        # Unpack the first 2 bytes as an unsigned short (16-bit) to get the length
+        length = struct.unpack("H", n[:2])[0]
+
+        # Extract the JSON segment and the remaining data
+        json_segment = n[4 : 4 + length]
+        remaining_data = n[4 + length :]
+
+        # Decode the JSON segment from UTF-8 and parse it
+        json_str = json_segment.decode("utf-8")
+        obj = json.loads(json_str)
+
+        # Attach the remaining data to the object
+        obj["data"]["data"] = remaining_data
+
+        return obj
 
 
 # Example usage

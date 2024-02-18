@@ -54,9 +54,7 @@ class Go2MQTTBridge:
         self.mqtt_client.connect(host=mqtt_broker, port=mqtt_port, keepalive=120)
         self.mqtt_client.loop_start()
 
-    async def bridge_mqtt(self, conn):
-        await conn.connectRobot()
-
+    async def mqtt_loop(self, conn):
         while True:
             await asyncio.sleep(1)
 
@@ -64,21 +62,12 @@ class Go2MQTTBridge:
         for topic in RTC_TOPIC.values():
             conn.data_channel.send(json.dumps({"type": "subscribe", "topic": topic}))
 
-    def on_data_channel_message(self, message):
-        if isinstance(message, str):
-            logger.debug("GO2->MQTT Received message: %s", message)
-
-        topic = "rt/unknown"
+    def on_data_channel_message(self, message, msgobj):
+        logger.debug(msgobj)
+        logger.debug("GO2->MQTT Received message type=%s topic=%s", msgobj.get("type"),  msgobj.get("topic"))
 
         if self.mqtt_client:
-            try:
-                if isinstance(message, str):
-                    msgobj = json.loads(message)
-                    topic = msgobj.get("topic", "rt/system")
-                elif isinstance(message, bytes):
-                    topic = "rt/utlidar/voxel_map_compressed"
-            finally:
-                self.mqtt_client.publish(topic, message, qos=1)
+            self.mqtt_client.publish(msgobj.get("topic","rt/system"), message, qos=1)
         else:
             logger.warn("MQTT client not initialized")
 
@@ -93,17 +82,17 @@ if __name__ == "__main__":
         os.getenv("GO2_IP"),
         os.getenv("GO2_TOKEN"),
         on_validated=mqtt_bridge.on_validated,
+        on_message=mqtt_bridge.on_data_channel_message,
     )
 
-    conn.data_channel.on("open", lambda: logger.debug("Data channel open"))
-    conn.data_channel.on("message", mqtt_bridge.on_data_channel_message)
-
     # connect to Go2
-    coro = mqtt_bridge.bridge_mqtt(conn)
+    # coro = mqtt_bridge.mqtt_loop(conn)
 
     loop = asyncio.get_event_loop()
+
     try:
-        loop.run_until_complete(coro)
+        loop.run_until_complete(conn.connect_robot())
+        loop.run_until_complete(mqtt_bridge.mqtt_loop(conn))
     except KeyboardInterrupt:
         pass
     finally:

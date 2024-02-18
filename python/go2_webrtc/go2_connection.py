@@ -30,6 +30,8 @@ from aiortc import (
 )
 from aiortc.contrib.media import MediaBlackhole, MediaRecorder
 import aiohttp
+import datetime
+import random
 
 # from go2_webrtc.go2_cv_video import Go2CvVideo
 from go2_webrtc.constants import SPORT_CMD, DATA_CHANNEL_TYPE
@@ -117,16 +119,20 @@ class Go2Connection:
         logger.debug("Data channel is open")
 
     def on_data_channel_message(self, message):
-        logger.info("Received message: %s", message)
+        logger.debug("Received message: %s", message)
 
         # If the data channel is not open, open it
         # it should not be closed if got a message
         if self.data_channel.readyState != "open":
             self.data_channel._setReadyState("open")
 
-        message = json.loads(message)
-        if message.get("type") == "validation":
-            self.validate(message)
+        try:
+            if isinstance(message, str):
+                message = json.loads(message)
+                if message.get("type") == "validation":
+                    self.validate(message)
+        except json.JSONDecodeError:
+            pass
 
     def validate(self, message):
         if message.get("data") == "Validation Ok.":
@@ -204,6 +210,12 @@ class Go2Connection:
         hash_obj.update(input_str.encode("utf-8"))
         # Return the hex digest of the hash
         return hash_obj.hexdigest()
+
+    @staticmethod
+    def generate_id():
+        return int(
+            datetime.datetime.now().timestamp() * 1000 % 2147483648
+        ) + random.randint(0, 999)
 
 
 # Example usage

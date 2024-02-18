@@ -34,69 +34,72 @@ logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-mqtt_client = None
+
+class Go2MQTTBridge:
+    def __init__(self):
+        self.mqtt_client = None
+        self.initialize_mqtt_client()
+
+    def initialize_mqtt_client(self):
+        mqtt_broker = os.getenv("MQTT_BROKER")
+        mqtt_username = os.getenv("MQTT_USERNAME")
+        mqtt_password = os.getenv("MQTT_PASSWORD")
+        mqtt_port = int(os.getenv("MQTT_PORT", 1883))
+
+        self.mqtt_client = mqtt.Client(
+            mqtt.CallbackAPIVersion.VERSION2, client_id="Go2", protocol=mqtt.MQTTv311
+        )
+
+        self.mqtt_client.username_pw_set(username=mqtt_username, password=mqtt_password)
+        self.mqtt_client.connect(host=mqtt_broker, port=mqtt_port, keepalive=120)
+        self.mqtt_client.loop_start()
+
+    async def bridge_mqtt(self, conn):
+        await conn.connectRobot()
+
+        while True:
+            await asyncio.sleep(1)
+
+    def on_validated(self):
+        for topic in RTC_TOPIC.values():
+            conn.data_channel.send(json.dumps({"type": "subscribe", "topic": topic}))
+
+    def on_data_channel_message(self, message):
+        if isinstance(message, str):
+            logger.debug("GO2->MQTT Received message: %s", message)
+
+        topic = "rt/unknown"
+
+        if self.mqtt_client:
+            try:
+                if isinstance(message, str):
+                    msgobj = json.loads(message)
+                    topic = msgobj.get("topic", "rt/system")
+                elif isinstance(message, bytes):
+                    topic = "rt/utlidar/voxel_map_compressed"
+            finally:
+                self.mqtt_client.publish(topic, message, qos=1)
+        else:
+            logger.warn("MQTT client not initialized")
 
 
+# TODO: parse command line arguments
+if __name__ == "__main__":
+    # connect to MQTT broker
+    mqtt_bridge = Go2MQTTBridge()
 
-def get_mqtt_client():
-    global mqtt_client
-
-    mqtt_broker = os.getenv("MQTT_BROKER")
-    mqtt_username = os.getenv("MQTT_USERNAME")
-    mqtt_password = os.getenv("MQTT_PASSWORD")
-    mqtt_port = os.getenv("MQTT_PORT") or 1883
-
-    mqtt_client = mqtt.Client(
-        mqtt.CallbackAPIVersion.VERSION2, client_id="Go2", protocol=mqtt.MQTTv311
+    # set up connection to Go2
+    conn = Go2Connection(
+        os.getenv("GO2_IP"),
+        os.getenv("GO2_TOKEN"),
+        on_validated=mqtt_bridge.on_validated,
     )
 
-    mqtt_client.username_pw_set(username=mqtt_username, password=mqtt_password)
+    conn.data_channel.on("open", lambda: logger.debug("Data channel open"))
+    conn.data_channel.on("message", mqtt_bridge.on_data_channel_message)
 
-    mqtt_client.connect(host=mqtt_broker, port=mqtt_port, keepalive=120)
-
-    # start the MQTT processing loop
-    mqtt_client.loop_start()
-
-
-# Connect to the robot and disconnect after 3 seconds
-async def bridge_mqtt(conn):
-    await conn.connectRobot()
-    get_mqtt_client()
-
-
-    while True:
-        await asyncio.sleep(1)
-
-
-def on_data_channel_open():
-    pass
-
-
-def on_data_channel_message(message):
-    global mqtt_client
-    print("GO2->MQTT Received message: " + message)
-
-    msgobj = json.loads(message)
-    if msgobj.get("type") == "validation" and msgobj.get("data") == "Validation Ok.":
-
-        for _, topic in RTC_TOPIC:
-            conn.data_channel.send('{"type": "subscribe", "topic": "' + topic + '" }')
-
-    if mqtt_client:
-        topic = msgobj.get("topic") or "rt/system"
-        mqtt_client.publish(topic, message, qos=1)
-    else:
-        logger.warn("MQTT client not initialized")
-
-
-# Example usage
-if __name__ == "__main__":
-    conn = Go2Connection(os.getenv("GO2_IP"), os.getenv("GO2_TOKEN"))
-
-    conn.data_channel.on("open", on_data_channel_open)
-    conn.data_channel.on("message", on_data_channel_message)
-
-    coro = bridge_mqtt(conn)
+    # connect to Go2
+    coro = mqtt_bridge.bridge_mqtt(conn)
 
     loop = asyncio.get_event_loop()
     try:

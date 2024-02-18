@@ -21,21 +21,20 @@ cd go2-webrtc
 python3 -m http.server
 ```
 
+## Sample Frontend Application
+The [javascript](https://github.com/tfoldi/go2-webrtc/tree/master/javascript) folder contains a sample frontend application that demonstrates how to use the JS WebRTC API to connect to and control the Unitree GO2 Robots. Explore the [javascript](https://github.com/tfoldi/go2-webrtc/tree/master/javascript) folder for more details and examples.
+
+## Python API for Backend/Console Applications
+For backend or console applications, the [python](https://github.com/tfoldi/go2-webrtc/tree/master/python) folder provides a Python API that interfaces with the Unitree GO2 Robots. This API is ideal for developers looking to integrate robot control into their Python applications or scripts. Check out the [python](https://github.com/tfoldi/go2-webrtc/tree/master/python) folder for documentation and examples.
+
 ### Prerequisites
 
-- A Unitree GO2 Robot accessible over the local network. All models supported.
-- A web browser that supports WebRTC (e.g., Chrome, Firefox).
-
-### Usage
-
-1. Enter your security token and robot IP address in the web interface.
-2. Click the "Connect" button to establish a connection to the robot.
-3. Use the command input to send commands to the robot.
-4. The video stream from the robot (if available) will be displayed in the web interface.
+- A Unitree GO2 Robot accessible over the local network. All models supported including Air, Pro and Edu
+- Local network connection (`STA-L`) to the robot
 
 ### Obtaining security token
 
-The easiest way is to sniff the traffic between the dog and your phone. Assuming that you have Linux or Mac:
+One way is to sniff the traffic between the dog and your phone. Assuming that you have Linux or Mac:
 
 1. Run `tinyproxy` or any other HTTP proxy on your computer
 2. Set your computer's IP and port as HTTP proxy on your phone
@@ -52,16 +51,17 @@ The token looks like this in the request payload:
     "type": "offer"
 }
 ```
+
+Another option is to obtain token via the `/login/email` endpoint.
+
+```
+curl -vX POST https://global-robot-api.unitree.com/login/email -d "email=<EMAIL>&password=<MD5 hash of your password>"
+```
+
 ## Development
 
-This project is structured around several key JavaScript files:
+This project is structured around several key JavaScript files for the frontend and a Python package for backend or console applications. To contribute or modify the project, refer to these resources for implementing additional features or improving the existing codebase. PRs are welcome.
 
-- `index.js`: Main script for handling UI interactions and storing settings.
-- `go2webrtc.js`: Core WebRTC functionality for connecting to and communicating with the robot. Can be used standalone as an API wrapper.
-- `utils.js`: Utility functions, including encryption helpers.
-- `constants.js`: Defines constants and command codes for robot control.
-
-To contribute or modify the project, refer to these files for implementing additional features or improving the existing codebase. PRs are welcome.
 
 ## License
 

@@ -57,7 +57,7 @@ class Go2VideoTrack(VideoStreamTrack):
 
 
 class Go2Connection:
-    def __init__(self, ip=None, token=None):
+    def __init__(self, ip=None, token=None, on_validated=None):
         self.pc = RTCPeerConnection()
         self.ip = ip
         self.token = token
@@ -68,6 +68,7 @@ class Go2Connection:
         # self.video_track = Go2CvVideo()
         self.audio_track = MediaBlackhole()
         self.video_track = MediaBlackhole()
+        self.on_validated = on_validated
 
         # Create and add a data channel
         self.data_channel = self.pc.createDataChannel("data", id=2, negotiated=False)
@@ -130,6 +131,8 @@ class Go2Connection:
     def validate(self, message):
         if message.get("data") == "Validation Ok.":
             self.validation_result = "SUCCESS"
+            if self.on_validated:
+                self.on_validated()
         else:
             self.publish(
                 "",

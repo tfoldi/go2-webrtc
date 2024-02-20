@@ -120,7 +120,7 @@ if __name__ == "__main__":
     # set up connection to Go2
     conn = Go2Connection(
         os.getenv("GO2_IP"),
-        os.getenv("GO2_TOKEN"),
+        os.getenv("GO2_TOKEN", ""),
         on_validated=mqtt_bridge.on_validated,
         on_message=mqtt_bridge.on_data_channel_message,
     )

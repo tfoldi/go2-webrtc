@@ -34,6 +34,8 @@ For backend or console applications, the [python](https://github.com/tfoldi/go2-
 
 ### Obtaining security token
 
+Connecting to your device without a security token is possible and might allow a connection to be established. However, this method limits you to a single active connection at any time. To simultaneously use multiple clients, such as a WebRTC-based application and a phone app, a valid security token is necessary. This ensures secure, multi-client access to your device.
+
 One way is to sniff the traffic between the dog and your phone. Assuming that you have Linux or Mac:
 
 1. Run `tinyproxy` or any other HTTP proxy on your computer

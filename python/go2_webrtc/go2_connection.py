@@ -61,7 +61,7 @@ class Go2VideoTrack(VideoStreamTrack):
 
 class Go2Connection:
     def __init__(
-        self, ip=None, token=None, on_validated=None, on_message=None, on_open=None
+        self, ip=None, token="", on_validated=None, on_message=None, on_open=None
     ):
         self.pc = RTCPeerConnection()
         self.ip = ip

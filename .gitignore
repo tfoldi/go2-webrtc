@@ -4,3 +4,7 @@ __pycache__
 python/go2-webrtc-env
 *.bin
 *venv*
+
+server.crt
+server.key
+example.bin

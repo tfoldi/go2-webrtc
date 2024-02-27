@@ -107,13 +107,13 @@ class VoxelWorld {
   }
   generateGeometryData(n, o, s, c) {
     const {
-        adjacent: u,
-        cellSize_X: l,
-        cellSize_Y: f,
-        tileSize: _,
-        tileTextureWidth: g,
-        tileTextureHeight: v,
-      } = this,
+      adjacent: u,
+      cellSize_X: l,
+      cellSize_Y: f,
+      tileSize: _,
+      tileTextureWidth: g,
+      tileTextureHeight: v,
+    } = this,
       T = [],
       E = [],
       y = [];
@@ -247,7 +247,7 @@ const init = ({
   ambientLight = new THREE.AmbientLight(16777215),
   gridHelper = new THREE.GridHelper(40, 40, 8947848),
   gridHelperGroup = new THREE.Group(),
-  viewType = !1,
+  viewType = 1,
   stats = Stats(),
   showStats = !1,
   currCameraPosition = new THREE.Vector3(0, 0, 0),
@@ -288,7 +288,7 @@ const init = ({
     (controls.minPolarAngle = 0.2),
     (controls.maxPolarAngle = (Math.PI / 4) * 3),
     showStats &&
-      (document.body.appendChild(stats.dom),
+    (document.body.appendChild(stats.dom),
       (stats.dom.style.top = "80px"),
       (stats.dom.style.left = "115px")),
     gridHelperGroup.add(gridHelper),
@@ -331,6 +331,59 @@ const { pointVoxelWorld, pointUpdated } = init({
   renderer,
 });
 
-pointVoxelWorld.currCellDataInfo = window.points;
-pointVoxelWorld.updateMeshesForData2();
-animate();
+animate()
+
+
+window.getBinaryData = (filepath) => {
+  return fetch(filepath)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to fetch data');
+      }
+      return response.arrayBuffer();
+    })
+    .then(arrayBuffer => {
+      return new Uint8Array(arrayBuffer);
+    })
+    .catch(error => {
+      throw error;
+    });
+};
+
+const threeJSWorker = new Worker(
+  new URL("/assets/three.worker.js", self.location)
+);
+window._threejsworker = threeJSWorker;
+threeJSWorker.onmessage = (re) => {
+  console.log("Binary Data", re);
+  pointVoxelWorld.currCellDataInfo = re.data
+  pointVoxelWorld.updateMeshesForData2()
+}
+
+setInterval(() => {
+  try {
+    console.warn("TICK");
+    window
+      .getBinaryData(`/assets/example.bin`)
+      .then((vortexBinaryData) => {
+        const _jsonLength = vortexBinaryData[0];
+        const _jsonOffset = 4;
+        const _jsonString = String.fromCharCode.apply(
+          null,
+          vortexBinaryData.slice(
+            _jsonOffset,
+            _jsonOffset + _jsonLength
+          )
+        );
+        const jsonOBJ = JSON.parse(_jsonString);
+        threeJSWorker.postMessage({
+          resolution: jsonOBJ.data.resolution,
+          origin: jsonOBJ.data.origin,
+          width: jsonOBJ.data.width,
+          data: vortexBinaryData.slice(_jsonOffset + _jsonLength),
+        });
+      });
+  } catch (e) {
+    console.error("ERROR DURING VERTEX LOAD", e);
+  }
+}, 1000)

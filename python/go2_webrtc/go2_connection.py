@@ -43,6 +43,8 @@ import hashlib
 import struct
 import base64
 
+from python.go2_webrtc.lidar_decoder import LidarDecoder
+
 
 load_dotenv()
 
@@ -243,8 +245,11 @@ class Go2Connection:
         json_str = json_segment.decode("utf-8")
         obj = json.loads(json_str)
 
+        decoder = LidarDecoder()
+        decoded_data = decoder.decode(remaining_data, obj['data'])
+
         # Attach the remaining data to the object
-        obj["data"]["data"] = remaining_data
+        obj["data"]["data"] = decoded_data
 
         return obj
 

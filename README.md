@@ -17,7 +17,7 @@ To get started with `go2-webrtc`, clone this repository and serve the `index.htm
 
 ```
 git clone https://github.com/tfoldi/go2-webrtc
-cd go2-webrtc
+cd go2-webrtc/javascript
 python3 -m http.server
 ```
 

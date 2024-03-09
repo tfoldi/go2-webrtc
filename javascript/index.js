@@ -93,6 +93,22 @@ function truncateString(str, maxLength) {
   }
 }
 
+
+function joystickTick(joyLeft, joyRight) {
+  const y = -1 * (joyRight.GetPosX() - 100) / 50;
+  const x = -1 * (joyLeft.GetPosY() - 100) / 50;
+  const z = -1 * (joyLeft.GetPosX() - 100) / 50;
+
+  if (x === 0 && y === 0 && z === 0) {
+    return;
+  }
+
+  console.log("Joystick Linear:", x, y);
+
+  globalThis.rtc.publishApi("rt/api/sport/request", 1008, JSON.stringify({x: x, y: y, z: z}));
+
+}
+
 function addJoysticks() {
   const joyConfig = {
     internalFillColor: "#FFFFFF",
@@ -103,6 +119,8 @@ function addJoysticks() {
   };
   var joyLeft = new JoyStick("joy-left", joyConfig);
   var joyRight = new JoyStick("joy-right", joyConfig);
+
+  setInterval( joystickTick, 100, joyLeft, joyRight );
 }
 
 // Load saved values when the page loads

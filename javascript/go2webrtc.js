@@ -8,9 +8,11 @@ function logMessage(text) {
 }
 
 export class Go2WebRTC {
-  constructor(token, robotIP) {
+  constructor(token, robotIP, messageCallback) {
     this.token = token;
     this.robotIP = robotIP;
+    this.messageCallback = messageCallback;
+
     this.msgCallbacks = new Map();
     this.validationResult = "PENDING";
     this.pc = new RTCPeerConnection({ sdpSemantics: "unified-plan" });
@@ -33,7 +35,11 @@ export class Go2WebRTC {
   }
 
   messageEventHandler(event) {
-    if (event.data && !event.data.includes("heartbeat")) {
+    if (
+      event.data &&
+      event.data.includes &&
+      !event.data.includes("heartbeat")
+    ) {
       console.log("onmessage", event);
       this.handleDataChannelMessage(event);
     }
@@ -47,7 +53,10 @@ export class Go2WebRTC {
     if (data.type === DataChannelType.VALIDATION) {
       this.rtcValidation(data);
     }
-    logMessage(`-> msg type:${event.type} data:${event.data}`);
+
+    if (this.messageCallback) {
+      this.messageCallback(data);
+    }
   }
 
   dealArrayBuffer(n) {
@@ -137,12 +146,16 @@ export class Go2WebRTC {
 
       // TODO: execute all the registred callbacks in a map defined
       // in the initRTC function
-      logMessage("Sending video on message");
-      this.publish("", "on", DataChannelType.VID);
+
       // TODO this should be on the callback for video on message
-      logMessage("Playing video");
-      document.getElementById("video-frame").srcObject =
-        this.VidTrackEvent.streams[0];
+      if (document.getElementById("video-frame")) {
+        logMessage("Playing video");
+        logMessage("Sending video on message");
+        this.publish("", "on", DataChannelType.VID);
+
+        document.getElementById("video-frame").srcObject =
+          this.VidTrackEvent.streams[0];
+      }
     } else {
       logMessage(`Sending validation key ${msg.data}`);
       this.publish("", encryptKey(msg.data), DataChannelType.VALIDATION); // );
@@ -196,6 +209,18 @@ export class Go2WebRTC {
         console.error("data channel is not open", topic);
         reject("data channel is not open");
       }
+    });
+  }
+
+  publishApi(topic, api_id, data) {
+    const uniqID =
+      (new Date().valueOf() % 2147483648) + Math.floor(Math.random() * 1e3);
+
+    console.log("Command:", api_id);
+
+    this.publish(topic, {
+      header: { identity: { id: uniqID, api_id: api_id} },
+      parameter: data
     });
   }
 

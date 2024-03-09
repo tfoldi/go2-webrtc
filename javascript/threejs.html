@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>ROS2 Vertex viewer</title>
+  <style>
+    body {
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <script type="importmap">
+            {
+              "imports": {
+                "three": "https://unpkg.com/three@0.156.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.156.0/examples/jsm/"
+              }
+            }
+    </script>
+  <script src="./threejs_mock_pointcloud.js"></script>
+  <script src="./md5.js"></script>
+  <script type="module" src="threejs.js"></script>
+  <script type="module" src="threejs.init.js"></script>
+</body>
+
+</html>

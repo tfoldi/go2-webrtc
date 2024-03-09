@@ -8,3 +8,5 @@ python/go2-webrtc-env
 server.crt
 server.key
 example.bin
+javascript/assets/tmp/
+.DS_Store

@@ -93,20 +93,41 @@ function truncateString(str, maxLength) {
   }
 }
 
+function applyGamePadDeadzeone(value, th) {
+  return Math.abs(value) > th ? value : 0
+}
 
 function joystickTick(joyLeft, joyRight) {
-  const y = -1 * (joyRight.GetPosX() - 100) / 50;
-  const x = -1 * (joyLeft.GetPosY() - 100) / 50;
-  const z = -1 * (joyLeft.GetPosX() - 100) / 50;
+  let x,y,z = 0;
+  let gpToUse = document.getElementById("gamepad").value;
+  if (gpToUse !== "NO") {
+    const gamepads = navigator.getGamepads();
+    let gp = gamepads[gpToUse];
+    
+    // LB must be pressed
+    if (gp.buttons[4].pressed == true) {
+      x = -1 * applyGamePadDeadzeone(gp.axes[1], 0.25);
+      y = -1 * applyGamePadDeadzeone(gp.axes[2], 0.25);
+      z = -1 * applyGamePadDeadzeone(gp.axes[0], 0.25);
+    } 
+  } else {
+     y = -1 * (joyRight.GetPosX() - 100) / 50;
+     x = -1 * (joyLeft.GetPosY() - 100) / 50;
+     z = -1 * (joyLeft.GetPosX() - 100) / 50;
+  }
 
   if (x === 0 && y === 0 && z === 0) {
     return;
   }
 
-  console.log("Joystick Linear:", x, y);
+  if (x == undefined || y == undefined || z == undefined) {
+    return;
+  }
 
+  console.log("Joystick Linear:", x, y, z);
+
+  if(globalThis.rtc == undefined) return;
   globalThis.rtc.publishApi("rt/api/sport/request", 1008, JSON.stringify({x: x, y: y, z: z}));
-
 }
 
 function addJoysticks() {
@@ -123,9 +144,38 @@ function addJoysticks() {
   setInterval( joystickTick, 100, joyLeft, joyRight );
 }
 
+const buildGamePadsSelect = (e) => {
+  const gp = navigator.getGamepads().filter(x => x != null && x.id.toLowerCase().indexOf("xbox") != -1);
+
+  const gamepadSelect = document.getElementById("gamepad");
+  gamepadSelect.innerHTML = "";
+
+  const option = document.createElement("option");
+  option.value = "NO";
+  option.textContent = "Don't use Gamepad"
+  option.selected = true;
+  gamepadSelect.appendChild(option);  
+
+  Object.entries(gp).forEach(([index, value]) => {
+    if (!value) return
+    const option = document.createElement("option");
+    option.value = value.index;
+    option.textContent = value.id;
+    gamepadSelect.appendChild(option);
+  });
+};
+
+window.addEventListener("gamepadconnected", buildGamePadsSelect);
+window.addEventListener("gamepaddisconnected", buildGamePadsSelect);
+buildGamePadsSelect();
+
 // Load saved values when the page loads
 document.addEventListener("DOMContentLoaded", loadSavedValues);
 document.addEventListener("DOMContentLoaded", addJoysticks);
+
+document.getElementById("gamepad").addEventListener("change", () => {
+//alert("change");
+});
 
 // Attach event listener to connect button
 document

@@ -189,3 +189,49 @@ document
 document
   .getElementById("execute-custom-btn")
   .addEventListener("click", handleExecuteCustomClick);
+
+
+
+
+  document.addEventListener('keydown', function(event) {
+    const key = event.key.toLowerCase();
+    let x = 0, y = 0, z = 0;
+
+    switch (key) {
+        case 'w': // Forward
+            x = 0.8;
+            break;
+        case 's': // Reverse
+            x = -0.4;
+            break;
+        case 'a': // Sideways left
+            y = 0.4;
+            break;
+        case 'd': // Sideways right
+            y = -0.4;
+            break;
+        case 'q': // Turn left
+            z = 2;
+            break;
+        case 'e': // Turn right
+            z = -2;
+            break;
+        default:
+            return; // Ignore other keys
+    }
+
+    if(globalThis.rtc !== undefined) {
+        globalThis.rtc.publishApi("rt/api/sport/request", 1008, JSON.stringify({x: x, y: y, z: z}));
+    }
+});
+
+document.addEventListener('keyup', function(event) {
+    const key = event.key.toLowerCase();
+    if (key === 'w' || key === 's' || key === 'a' || key === 'd' || key === 'q' || key === 'e') {
+        if(globalThis.rtc !== undefined) {
+            // Stop movement by sending zero velocity
+            globalThis.rtc.publishApi("rt/api/sport/request", 1008, JSON.stringify({x: 0, y: 0, z: 0}));
+        }
+    }
+});
+

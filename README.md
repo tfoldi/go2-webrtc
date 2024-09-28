@@ -4,6 +4,8 @@ The `go2-webrtc` project provides a WebRTC API for Unitree GO2 Robots, enabling 
 
 Go2's WebRTC API supports all models, including Go2 Air, Pro, and Edu versions.
 
+There is another, more featureful Python API for GO2 (also via WebRTC) called `go2_webrtc_connect` built by the infamous @legion1581. It has video and audio support among many other cool features:  https://github.com/legion1581/go2_webrtc_connect
+
 ## Features
 
 - **WebRTC Integration**: Utilizes WebRTC to establish a real-time communication channel between the web client and the robot.

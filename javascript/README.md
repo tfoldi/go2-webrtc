@@ -4,6 +4,8 @@ The `go2-webrtc` project provides a WebRTC API for Unitree GO2 Robots, enabling 
 
 Go2's WebRTC API supports all models, including Go2 Air, Pro, and Edu versions.
 
+This branch does not work with firmwares prior to 1.1.1. If you have an older firmware, use the previous commit from the repository.
+
 ## Features
 
 - **WebRTC Integration**: Utilizes WebRTC to establish a real-time communication channel between the web client and the robot.
@@ -13,12 +15,14 @@ Go2's WebRTC API supports all models, including Go2 Air, Pro, and Edu versions.
 
 ## Getting Started
 
-To get started with `go2-webrtc`, clone this repository and serve the `index.html` file from a local web server to a modern web browser. Ensure that your Unitree GO2 Robot is powered on and connected to the same network as your computer.
+To get started with `go2-webrtc`, clone this repository and serve the `index.html` file from the backend server (`server.py`) to a modern web browser. Ensure that your Unitree GO2 Robot is powered on and connected to the same network as your computer.
 
 ```
 git clone https://github.com/tfoldi/go2-webrtc
 cd go2-webrtc
-python3 -m http.server
+pip install -r python/requirements.txt
+cd javascript
+python ./server.py
 ```
 
 ### Prerequisites
@@ -34,6 +38,8 @@ python3 -m http.server
 4. The video stream from the robot (if available) will be displayed in the web interface.
 
 ### Obtaining security token
+
+Connecting to your device without a security token is possible and might allow a connection to be established. However, this method limits you to a single active connection at any time. To simultaneously use multiple clients, such as a WebRTC-based application and a phone app, a valid security token is necessary. This ensures secure, multi-client access to your device.
 
 The easiest way is to sniff the traffic between the dog and your phone. Assuming that you have Linux or Mac:
 
@@ -60,6 +66,7 @@ This project is structured around several key JavaScript files:
 - `go2webrtc.js`: Core WebRTC functionality for connecting to and communicating with the robot. Can be used standalone as an API wrapper.
 - `utils.js`: Utility functions, including encryption helpers.
 - `constants.js`: Defines constants and command codes for robot control.
+- `server.py`: Python server used for CORS proxying
 
 To contribute or modify the project, refer to these files for implementing additional features or improving the existing codebase. PRs are welcome.
 

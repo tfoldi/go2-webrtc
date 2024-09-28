@@ -87,6 +87,7 @@ export class Go2WebRTC {
       token: this.token,
       id: "STA_localNetwork",
       type: "offer",
+      ip: this.robotIP
     };
     answer["sdp"] = this.pc.localDescription.sdp;
     console.log(answer);
@@ -99,7 +100,7 @@ export class Go2WebRTC {
       body: JSON.stringify(answer),
     };
 
-    fetch(`http://${this.robotIP}:8081/offer`, options)
+    fetch(`http://${window.location.hostname}:8081/offer`, options)
       .then((response) => {
         console.log(`statusCode: ${response.status}`);
         return response.json();

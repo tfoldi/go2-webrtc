@@ -13,12 +13,14 @@ Go2's WebRTC API supports all models, including Go2 Air, Pro, and Edu versions.
 
 ## Getting Started
 
-To get started with `go2-webrtc`, clone this repository and serve the `index.html` file from a local web server to a modern web browser. Ensure that your Unitree GO2 Robot is powered on and connected to the same network as your computer.
+To get started with `go2-webrtc`, clone this repository and serve the `index.html` file from the backend server (`server.py`) to a modern web browser. Ensure that your Unitree GO2 Robot is powered on and connected to the same network as your computer.
 
 ```
 git clone https://github.com/tfoldi/go2-webrtc
-cd go2-webrtc/javascript
-python3 -m http.server
+cd go2-webrtc
+pip install -r python/requirements.txt
+cd javascript
+python ./server.py
 ```
 
 ## Sample Frontend Application

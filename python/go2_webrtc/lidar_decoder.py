@@ -22,6 +22,7 @@
 import math
 import ctypes
 import numpy as np
+import os
 
 from wasmtime import Config, Engine, Store, Module, Instance, Func, FuncType
 from wasmtime import ValType
@@ -35,7 +36,9 @@ class LidarDecoder:
         config.debug_info = True
         self.store = Store(Engine(config))
 
-        self.module = Module.from_file(self.store.engine, "libvoxel.wasm")
+        module_dir = os.path.dirname(os.path.abspath(__file__))
+
+        self.module = Module.from_file(self.store.engine, os.path.join(module_dir,"libvoxel.wasm"))
 
         self.a_callback_type = FuncType([ValType.i32()], [ValType.i32()])
         self.b_callback_type = FuncType([ValType.i32(), ValType.i32(), ValType.i32()], [])

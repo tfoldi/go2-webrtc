@@ -32,6 +32,13 @@ from aiortc.contrib.media import MediaBlackhole, MediaRecorder
 import aiohttp
 import datetime
 import random
+import binascii
+import uuid
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import AES
+from Crypto.Cipher import PKCS1_v1_5
+import requests
+
 
 # from go2_webrtc.go2_cv_video import Go2CvVideo
 from go2_webrtc.constants import SPORT_CMD, DATA_CHANNEL_TYPE
@@ -43,7 +50,7 @@ import hashlib
 import struct
 import base64
 
-from python.go2_webrtc.lidar_decoder import LidarDecoder
+from go2_webrtc.lidar_decoder import LidarDecoder
 
 
 load_dotenv()
@@ -55,6 +62,8 @@ logger.setLevel(logging.DEBUG)
 
 
 decoder = LidarDecoder()
+
+
 
 
 class Go2AudioTrack(AudioStreamTrack):
@@ -179,7 +188,7 @@ class Go2Connection:
         logger.debug("-> Sending message %s", json.dumps(payload))
         self.data_channel.send(json.dumps(payload))
 
-    async def connect_robot(self):
+    async def connect_robot_v10(self):
         """Post the offer to an HTTP server and set the received answer."""
         offer_sdp = await self.generate_offer()
         async with aiohttp.ClientSession() as session:
@@ -191,8 +200,7 @@ class Go2Connection:
                 "type": "offer",
                 "token": self.token,
             }
-            logger.info("Sending offer to the signaling server at %s", url)
-            # logger.debug(data)
+            logger.debug("Sending offer to the signaling server at %s", url)
 
             async with session.post(url, json=data, headers=headers) as resp:
                 if resp.status == 200:
@@ -204,6 +212,84 @@ class Go2Connection:
                     # await self.connect()
                 else:
                     logger.info("Failed to get answer from server")
+
+    async def connect_robot(self):
+        try:
+            return await self.connect_robot_v10()
+        except Exception as e:
+            logger.info(
+                "Failed to connect to the robot with firmware 1.0.x method, trying new method... %s",
+                e,
+            )
+
+        logging.info("Trying to send SDP using a NEW method...")
+
+        offer = await self.pc.createOffer()
+        await self.pc.setLocalDescription(offer)
+
+        sdp_offer = self.pc.localDescription
+
+        sdp_offer_json = {
+            "id": "STA_localNetwork",
+            "sdp": sdp_offer.sdp,
+            "type": sdp_offer.type,
+            "token": self.token,
+        }
+
+        new_sdp = json.dumps(sdp_offer_json)
+        url = f"http://{self.ip}:9991/con_notify"
+        response = self.make_local_request(url, body=None, headers=None)
+
+        if response:
+            # Decode the response text from base64
+            decoded_response = base64.b64decode(response.text).decode("utf-8")
+
+            # Parse the decoded response as JSON
+            decoded_json = json.loads(decoded_response)
+
+            # Extract the 'data1' field from the JSON
+            data1 = decoded_json.get("data1")
+
+            # Extract the public key from 'data1'
+            public_key_pem = data1[10 : len(data1) - 10]
+            path_ending = self.calc_local_path_ending(data1)
+
+            # Generate AES key
+            aes_key = self.generate_aes_key()
+
+            # Load Public Key
+            public_key = self.rsa_load_public_key(public_key_pem)
+
+            # Encrypt the SDP and AES key
+            body = {
+                "data1": self.aes_encrypt(new_sdp, aes_key),
+                "data2": self.rsa_encrypt(aes_key, public_key),
+            }
+
+            # URL for the second request
+            url = f"http://{self.ip}:9991/con_ing_{path_ending}"
+
+            # Set the appropriate headers for URL-encoded form data
+            headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+            # Send the encrypted data via POST
+            response = self.make_local_request(url, body=json.dumps(body), headers=headers)
+
+            # If response is successful, decrypt it
+            if response:
+                decrypted_response = self.aes_decrypt(response.text, aes_key)
+                peer_answer = json.loads(decrypted_response)
+                answer = RTCSessionDescription(
+                    sdp=peer_answer["sdp"], type=peer_answer["type"]
+                )
+                await self.pc.setRemoteDescription(answer)
+            else:
+                logger.info(f"Failed to get answer from server: Reason: {response}")
+
+        else:
+            raise ValueError(
+                "Failed to receive initial public key response with new method."
+            )
 
     @staticmethod
     def hex_to_base64(hex_str):
@@ -249,12 +335,129 @@ class Go2Connection:
         json_str = json_segment.decode("utf-8")
         obj = json.loads(json_str)
 
-        decoded_data = decoder.decode(remaining_data, obj['data'])
+        decoded_data = decoder.decode(remaining_data, obj["data"])
 
         # Attach the remaining data to the object
         obj["data"]["data"] = decoded_data
 
         return obj
+
+    @staticmethod
+    def calc_local_path_ending(data1):
+        # Initialize an array of strings
+        strArr = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+
+        # Extract the last 10 characters of data1
+        last_10_chars = data1[-10:]
+
+        # Split the last 10 characters into chunks of size 2
+        chunked = [last_10_chars[i : i + 2] for i in range(0, len(last_10_chars), 2)]
+
+        # Initialize an empty list to store indices
+        arrayList = []
+
+        # Iterate over the chunks and find the index of the second character in strArr
+        for chunk in chunked:
+            if len(chunk) > 1:
+                second_char = chunk[1]
+                try:
+                    index = strArr.index(second_char)
+                    arrayList.append(index)
+                except ValueError:
+                    # Handle case where the character is not found in strArr
+                    print(f"Character {second_char} not found in strArr.")
+
+        # Convert arrayList to a string without separators
+        joinToString = "".join(map(str, arrayList))
+
+        return joinToString
+
+    @staticmethod
+    def generate_aes_key() -> str:
+        uuid_32 = uuid.uuid4().bytes
+        uuid_32_hex_string = binascii.hexlify(uuid_32).decode("utf-8")
+        return uuid_32_hex_string
+
+    @staticmethod
+    def rsa_load_public_key(pem_data: str) -> RSA.RsaKey:
+        """Load an RSA public key from a PEM-formatted string."""
+        key_bytes = base64.b64decode(pem_data)
+        return RSA.import_key(key_bytes)
+
+    @staticmethod
+    def pad(data: str) -> bytes:
+        """Pad data to be a multiple of 16 bytes (AES block size)."""
+        block_size = AES.block_size
+        padding = block_size - len(data) % block_size
+        padded_data = data + chr(padding) * padding
+        return padded_data.encode("utf-8")
+
+    @staticmethod
+    def aes_encrypt(data: str, key: str) -> str:
+        """Encrypt the given data using AES (ECB mode with PKCS5 padding)."""
+        # Ensure key is 32 bytes for AES-256
+        key_bytes = key.encode("utf-8")
+        # Pad the data to ensure it is a multiple of block size
+        padded_data = Go2Connection.pad(data)
+        # Create AES cipher in ECB mode
+        cipher = AES.new(key_bytes, AES.MODE_ECB)
+        encrypted_data = cipher.encrypt(padded_data)
+        encoded_encrypted_data = base64.b64encode(encrypted_data).decode("utf-8")
+        return encoded_encrypted_data
+
+    @staticmethod
+    def rsa_encrypt(data: str, public_key: RSA.RsaKey) -> str:
+        """Encrypt data using RSA and a given public key."""
+        cipher = PKCS1_v1_5.new(public_key)
+        # Maximum chunk size for encryption with RSA/ECB/PKCS1Padding is key size - 11 bytes
+        max_chunk_size = public_key.size_in_bytes() - 11
+        data_bytes = data.encode("utf-8")
+        encrypted_bytes = bytearray()
+        for i in range(0, len(data_bytes), max_chunk_size):
+            chunk = data_bytes[i : i + max_chunk_size]
+            encrypted_chunk = cipher.encrypt(chunk)
+            encrypted_bytes.extend(encrypted_chunk)
+        # Base64 encode the final encrypted data
+        encoded_encrypted_data = base64.b64encode(encrypted_bytes).decode("utf-8")
+        return encoded_encrypted_data
+
+    @staticmethod
+    def unpad(data: bytes) -> str:
+        """Remove padding from data."""
+        padding = data[-1]
+        return data[:-padding].decode("utf-8")
+
+    @staticmethod
+    def aes_decrypt(encrypted_data: str, key: str) -> str:
+        """Decrypt the given data using AES (ECB mode with PKCS5 padding)."""
+        # Ensure key is 32 bytes for AES-256
+        key_bytes = key.encode("utf-8")
+        # Decode Base64 encrypted data
+        encrypted_data_bytes = base64.b64decode(encrypted_data)
+        # Create AES cipher in ECB mode
+        cipher = AES.new(key_bytes, AES.MODE_ECB)
+        # Decrypt data
+        decrypted_padded_data = cipher.decrypt(encrypted_data_bytes)
+        # Unpad the decrypted data
+        decrypted_data = Go2Connection.unpad(decrypted_padded_data)
+        return decrypted_data
+
+    @staticmethod
+    def make_local_request(path, body=None, headers=None):
+        try:
+            # Send POST request with provided path, body, and headers
+            response = requests.post(url=path, data=body, headers=headers)
+            # Check if the request was successful (status code 200)
+            response.raise_for_status()  # Raises an HTTPError for bad responses (4xx, 5xx)
+            if response.status_code == 200:
+                return response  # Returning the whole response object if needed
+            else:
+                # Handle non-200 responses
+                return None
+        except requests.exceptions.RequestException as e:
+            # Handle any exception related to the request (e.g., connection errors, timeouts)
+            logging.error(f"An error occurred: {e}")
+            return None
 
 
 # Example usage

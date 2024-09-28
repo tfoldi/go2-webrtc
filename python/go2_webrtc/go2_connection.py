@@ -64,8 +64,6 @@ logger.setLevel(logging.DEBUG)
 decoder = LidarDecoder()
 
 
-
-
 class Go2AudioTrack(AudioStreamTrack):
     kind = "audio"
 
@@ -229,16 +227,22 @@ class Go2Connection:
 
         sdp_offer = self.pc.localDescription
 
+        peer_answer = Go2Connection.get_peer_answer(sdp_offer, self.token, self.ip)
+        answer = RTCSessionDescription(sdp=peer_answer["sdp"], type=peer_answer["type"])
+        await self.pc.setRemoteDescription(answer)
+
+    @staticmethod
+    def get_peer_answer(sdp_offer, token, robot_ip):
         sdp_offer_json = {
             "id": "STA_localNetwork",
             "sdp": sdp_offer.sdp,
             "type": sdp_offer.type,
-            "token": self.token,
+            "token": token,
         }
 
         new_sdp = json.dumps(sdp_offer_json)
-        url = f"http://{self.ip}:9991/con_notify"
-        response = self.make_local_request(url, body=None, headers=None)
+        url = f"http://{robot_ip}:9991/con_notify"
+        response = Go2Connection.make_local_request(url, body=None, headers=None)
 
         if response:
             # Decode the response text from base64
@@ -252,39 +256,39 @@ class Go2Connection:
 
             # Extract the public key from 'data1'
             public_key_pem = data1[10 : len(data1) - 10]
-            path_ending = self.calc_local_path_ending(data1)
+            path_ending = Go2Connection.calc_local_path_ending(data1)
 
             # Generate AES key
-            aes_key = self.generate_aes_key()
+            aes_key = Go2Connection.generate_aes_key()
 
             # Load Public Key
-            public_key = self.rsa_load_public_key(public_key_pem)
+            public_key = Go2Connection.rsa_load_public_key(public_key_pem)
 
             # Encrypt the SDP and AES key
             body = {
-                "data1": self.aes_encrypt(new_sdp, aes_key),
-                "data2": self.rsa_encrypt(aes_key, public_key),
+                "data1": Go2Connection.aes_encrypt(new_sdp, aes_key),
+                "data2": Go2Connection.rsa_encrypt(aes_key, public_key),
             }
 
             # URL for the second request
-            url = f"http://{self.ip}:9991/con_ing_{path_ending}"
+            url = f"http://{robot_ip}:9991/con_ing_{path_ending}"
 
             # Set the appropriate headers for URL-encoded form data
             headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
             # Send the encrypted data via POST
-            response = self.make_local_request(url, body=json.dumps(body), headers=headers)
+            response = Go2Connection.make_local_request(
+                url, body=json.dumps(body), headers=headers
+            )
 
             # If response is successful, decrypt it
             if response:
-                decrypted_response = self.aes_decrypt(response.text, aes_key)
+                decrypted_response = Go2Connection.aes_decrypt(response.text, aes_key)
                 peer_answer = json.loads(decrypted_response)
-                answer = RTCSessionDescription(
-                    sdp=peer_answer["sdp"], type=peer_answer["type"]
-                )
-                await self.pc.setRemoteDescription(answer)
+
+                return peer_answer
             else:
-                logger.info(f"Failed to get answer from server: Reason: {response}")
+                raise ValueError(f"Failed to get answer from server")
 
         else:
             raise ValueError(

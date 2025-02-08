@@ -337,9 +337,14 @@ animate()
 window.getBinaryData = (filepath) => {
   return fetch(filepath)
     .then(response => {
-      if (!response.ok) {
-        throw new Error('Failed to fetch data');
-      }
+if (!response.ok) {
+    console.error('Fetch failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        url: filepath
+    });
+    throw new Error(`Failed to fetch data from ${filepath} (Status: ${response.status})`);
+}
       return response.arrayBuffer();
     })
     .then(arrayBuffer => {
